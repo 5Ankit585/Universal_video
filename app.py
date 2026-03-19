@@ -2,7 +2,7 @@
 web_app.py  —  MediaVault Pro Web Server
 Flask backend that powers the browser-based UI.
 Run:  py web_app.py
-Then open:  http://localhost:5000
+Then open:  http://0.0.0.0:10000
 """
 
 import os
@@ -357,6 +357,6 @@ if __name__ == "__main__":
     os.makedirs(cfg.get("download_folder") or "downloads", exist_ok=True)
     print("\n" + "="*52)
     print("  MediaVault Pro  —  Web Interface")
-    print("  Open in browser:  http://localhost:5000")
+    print("  Open in browser:  http://0.0.0.0:10000")
     print("="*52 + "\n")
     app.run(debug=False, port=5000, threaded=True)
