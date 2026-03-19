@@ -1,43 +1,50 @@
+"""
+database.py  —  SQLite download history
+"""
+
 import sqlite3
 import os
-import threading
 
-DB_PATH = "history.db"
+# On Render, keep the DB in /tmp so it's writable
+_DEFAULT_PATH = "/tmp/history.db" if os.environ.get("RENDER") else "history.db"
 
 
 class HistoryDB:
+    def __init__(self, db_path=None):
+        self.db_path = db_path or _DEFAULT_PATH
+        self._init()
 
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.create_table()
-
-    def get_connection(self):
-        return sqlite3.connect(DB_PATH, check_same_thread=False)
-
-    def create_table(self):
-        with self.get_connection() as conn:
-            conn.execute("""
-            CREATE TABLE IF NOT EXISTS downloads (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT,
-                path TEXT,
-                type TEXT,
-                quality TEXT,
-                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+    def _init(self):
+        with sqlite3.connect(self.db_path) as c:
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS downloads (
+                    title   TEXT,
+                    path    TEXT,
+                    type    TEXT,
+                    quality TEXT,
+                    date    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
             """)
 
-    def add_entry(self, title, path, filetype, quality):
-        with self.lock:
-            with self.get_connection() as conn:
-                conn.execute(
-                    "INSERT INTO downloads (title, path, type, quality) VALUES (?, ?, ?, ?)",
-                    (title, path, filetype, quality)
+    def add_entry(self, title: str, path: str, filetype: str, quality: str):
+        try:
+            with sqlite3.connect(self.db_path) as c:
+                c.execute(
+                    "INSERT INTO downloads (title, path, type, quality) VALUES (?,?,?,?)",
+                    (title, path, filetype, quality),
                 )
+        except Exception:
+            pass  # Never crash the download just because history failed
 
     def get_all(self):
-        with self.get_connection() as conn:
-            cursor = conn.execute(
-                "SELECT title, path, type, quality, date FROM downloads ORDER BY date DESC"
-            )
-            return cursor.fetchall()
+        try:
+            with sqlite3.connect(self.db_path) as c:
+                return c.execute(
+                    "SELECT title, path, type, quality, date FROM downloads ORDER BY date DESC"
+                ).fetchall()
+        except Exception:
+            return []
+
+    def clear(self):
+        with sqlite3.connect(self.db_path) as c:
+            c.execute("DELETE FROM downloads")

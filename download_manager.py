@@ -6,6 +6,9 @@ import subprocess
 import sys
 from database import HistoryDB
 
+# Path to cookies file — place cookies.txt in the project root
+_COOKIES_FILE = os.path.join(os.path.dirname(__file__), "cookies.txt")
+
 
 class DownloadManager:
 
@@ -23,7 +26,9 @@ class DownloadManager:
         self.download_folder = os.path.abspath(download_folder or "downloads")
         os.makedirs(self.download_folder, exist_ok=True)
 
-        self.db = HistoryDB()
+        # Use /tmp/history.db on Render, history.db locally
+        db_path = "/tmp/history.db" if os.environ.get("RENDER") else "history.db"
+        self.db = HistoryDB(db_path=db_path)
 
         self.worker_thread = threading.Thread(
             target=self._process_queue, daemon=True)
@@ -95,9 +100,9 @@ class DownloadManager:
         if isinstance(urls, str):
             urls = [urls]
 
-        total    = len(urls)
-        speed_kb = (self.settings.get("speed_limit_kb")
-                    if self.settings else 0) or 0
+        total     = len(urls)
+        speed_kb  = (self.settings.get("speed_limit_kb")
+                     if self.settings else 0) or 0
         audio_fmt = (self.settings.get("audio_format")
                      if self.settings else "mp3") or "mp3"
 
@@ -154,14 +159,28 @@ class DownloadManager:
                     self._status(f"[{_i}/{_t}] Processing...")
                     self._progress(_i / _t)
 
-            # Common options
+            # ── Common yt-dlp options ─────────────────────────────────────────
             common = {
                 "outtmpl":        os.path.join(
                     self.download_folder, "%(title)s.%(ext)s"),
                 "progress_hooks": [progress_hook],
                 "quiet":          True,
                 "no_warnings":    True,
+                # Helps bypass bot-detection on cloud IPs
+                "extractor_args": {"youtube": {"player_client": ["web", "android"]}},
             }
+
+            # ── Cookies — fixes YouTube 403 on cloud/server IPs ──────────────
+            if os.path.isfile(_COOKIES_FILE):
+                common["cookiefile"] = _COOKIES_FILE
+                self._status(f"[{idx}/{total}] Using cookies for auth...")
+            else:
+                # Warn once so the operator knows why it may fail
+                self._status(
+                    f"[{idx}/{total}] No cookies.txt found — "
+                    "YouTube may block downloads on server IPs."
+                )
+
             if speed_kb > 0:
                 common["ratelimit"] = speed_kb * 1024
             if subtitles:

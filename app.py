@@ -25,11 +25,18 @@ app.config["SECRET_KEY"] = "mediavault-pro-2024"
 
 cfg = Settings()
 
-# ── Render: use /tmp/downloads for file storage ───────────────────────────────
-if os.environ.get("RENDER"):
+# ── Render: use /tmp for writable storage ─────────────────────────────────────
+_IS_RENDER = bool(os.environ.get("RENDER"))
+if _IS_RENDER:
     _dl_folder = "/tmp/downloads"
     cfg.set("download_folder", _dl_folder)
     os.makedirs(_dl_folder, exist_ok=True)
+
+# DB path — /tmp on Render (writable), local file otherwise
+_DB_PATH = "/tmp/history.db" if _IS_RENDER else "history.db"
+
+# cookies.txt lives next to app.py
+_COOKIES_PATH = os.path.join(os.path.dirname(__file__), "cookies.txt")
 
 # ── SSE event queues ──────────────────────────────────────────────────────────
 _dl_events   = queue.Queue()
@@ -96,6 +103,40 @@ def api_dl_events():
         stream_with_context(generate()),
         mimetype="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+# =============================================================================
+# COOKIES API  (upload cookies.txt from browser to fix YouTube on cloud IPs)
+# =============================================================================
+
+@app.route("/api/cookies/status")
+def api_cookies_status():
+    exists = os.path.isfile(_COOKIES_PATH)
+    size   = os.path.getsize(_COOKIES_PATH) if exists else 0
+    return jsonify({"present": exists, "bytes": size})
+
+@app.route("/api/cookies/upload", methods=["POST"])
+def api_cookies_upload():
+    """Accept a cookies.txt file upload and save it next to app.py."""
+    f = request.files.get("file")
+    if not f:
+        return jsonify({"error": "No file provided"}), 400
+    if not f.filename.endswith(".txt"):
+        return jsonify({"error": "Must be a .txt file"}), 400
+    try:
+        f.save(_COOKIES_PATH)
+        size = os.path.getsize(_COOKIES_PATH)
+        return jsonify({"ok": True, "bytes": size})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/cookies/delete", methods=["POST"])
+def api_cookies_delete():
+    try:
+        if os.path.isfile(_COOKIES_PATH):
+            os.remove(_COOKIES_PATH)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # =============================================================================
 # PLAYLIST API
@@ -237,7 +278,7 @@ def api_presets():
 @app.route("/api/history")
 def api_history():
     q    = request.args.get("q", "").lower()
-    rows = HistoryDB().get_all()
+    rows = HistoryDB(db_path=_DB_PATH).get_all()
     if q:
         rows = [r for r in rows if q in r[0].lower()]
     return jsonify([
@@ -247,15 +288,13 @@ def api_history():
 
 @app.route("/api/history/clear", methods=["POST"])
 def api_history_clear():
-    import sqlite3
-    with sqlite3.connect("history.db") as c:
-        c.execute("DELETE FROM downloads")
+    HistoryDB(db_path=_DB_PATH).clear()
     return jsonify({"ok": True})
 
 @app.route("/api/history/export")
 def api_history_export():
     import csv, io
-    rows   = HistoryDB().get_all()
+    rows   = HistoryDB(db_path=_DB_PATH).get_all()
     output = io.StringIO()
     w = csv.writer(output)
     w.writerow(["Title", "Path", "Type", "Quality", "Date"])
@@ -328,7 +367,7 @@ def api_storage():
     return jsonify({"bytes": total, "count": count})
 
 # =============================================================================
-# RUN  ←  THIS IS THE FIXED PART
+# RUN
 # =============================================================================
 
 if __name__ == "__main__":
