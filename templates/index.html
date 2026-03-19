@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediaVault Pro</title>
+<style>
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════════ */
+:root {
+  --accent:    #6366f1;
+  --accent-h:  #4f46e5;
+  --accent-lo: #1e1e3f;
+  --green:     #22c55e;
+  --green-h:   #16a34a;
+  --red:       #ef4444;
+  --amber:     #f59e0b;
+  --violet:    #a78bfa;
+  --radius:    14px;
+  --sidebar:   220px;
+  --trans:     .2s ease;
+}
+[data-theme="dark"] {
+  --bg:      #0f0f14;
+  --surface: #16161e;
+  --card:    #1c1c27;
+  --border:  #2a2a3d;
+  --hover:   #252535;
+  --input:   #12121a;
+  --t1:      #f1f5f9;
+  --t2:      #94a3b8;
+  --t3:      #475569;
+  --ctrl:    #0a0a12;
+}
+[data-theme="light"] {
+  --bg:      #f0f2f8;
+  --surface: #e8ebf4;
+  --card:    #ffffff;
+  --border:  #d1d5e8;
+  --hover:   #e2e6f3;
+  --input:   #f8f9ff;
+  --ctrl:    #e8ebf4;
+  --t1:      #0f172a;
+  --t2:      #475569;
+  --t3:      #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESET + BASE
+═══════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--t1);
+  display:flex;height:100vh;overflow:hidden;
+  transition:background var(--trans),color var(--trans);
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+button{cursor:pointer;border:none;font-family:inherit;transition:all var(--trans)}
+input,textarea,select{font-family:inherit;outline:none}
+
+/* ═══════════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════════ */
+#sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  background:var(--surface);
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+}
+.sidebar-logo{
+  background:var(--accent);
+  padding:22px 20px;
+  font-size:16px;font-weight:700;color:#fff;
+  letter-spacing:.3px;
+}
+.sidebar-logo span{
+  font-size:11px;font-weight:400;
+  opacity:.75;display:block;margin-top:2px;
+}
+.nav{padding:14px 10px;flex:1}
+.nav-btn{
+  display:flex;align-items:center;gap:10px;
+  width:100%;padding:12px 14px;
+  border-radius:10px;background:transparent;
+  color:var(--t2);font-size:13px;font-weight:500;
+  text-align:left;margin-bottom:3px;
+  transition:all var(--trans);
+}
+.nav-btn:hover{background:var(--hover);color:var(--t1)}
+.nav-btn.active{
+  background:var(--accent-lo);
+  color:var(--accent);font-weight:700;
+}
+.nav-icon{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;background:var(--hover);flex-shrink:0;
+}
+.nav-btn.active .nav-icon{background:var(--accent);color:#fff}
+.sidebar-bottom{
+  padding:12px 10px 16px;
+  border-top:1px solid var(--border);
+}
+.storage-info{
+  font-size:11px;color:var(--t3);
+  padding:6px 14px;margin-bottom:8px;
+}
+.theme-row{
+  display:flex;gap:4px;padding:0 4px;margin-bottom:8px;
+}
+.theme-btn{
+  flex:1;padding:7px 4px;border-radius:8px;
+  font-size:11px;font-weight:600;
+  background:var(--hover);color:var(--t2);
+}
+.theme-btn.active{background:var(--accent);color:#fff}
+.sidebar-action-btn{
+  width:100%;padding:9px;border-radius:8px;
+  background:transparent;color:var(--t3);
+  font-size:11px;
+}
+.sidebar-action-btn:hover{background:var(--hover);color:var(--t2)}
+
+/* ═══════════════════════════════════════════════════════
+   MAIN CONTENT
+═══════════════════════════════════════════════════════ */
+#main{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column}
+.page{display:none;flex-direction:column;flex:1}
+.page.active{display:flex}
+
+/* Page hero header */
+.page-hero{
+  background:var(--surface);
+  border-bottom:3px solid var(--accent);
+  padding:20px 30px;
+  display:flex;align-items:center;gap:14px;flex-shrink:0;
+}
+.page-hero.green-accent{border-color:var(--green)}
+.page-hero h1{font-size:20px;font-weight:700}
+.page-hero .sub{font-size:11px;color:var(--t3);margin-top:3px}
+
+.page-body{padding:24px 28px;flex:1}
+
+/* ═══════════════════════════════════════════════════════
+   CARDS
+═══════════════════════════════════════════════════════ */
+.card{
+  background:var(--card);border-radius:var(--radius);
+  margin-bottom:14px;overflow:hidden;
+}
+.card-hdr{
+  padding:18px 22px 10px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-hdr h3{font-size:13px;font-weight:700}
+.card-hdr .badge{
+  font-size:10px;color:var(--t3);
+  background:var(--hover);padding:2px 8px;border-radius:20px;
+}
+.card-body{padding:0 22px 20px}
+
+/* ═══════════════════════════════════════════════════════
+   DOWNLOAD PAGE
+═══════════════════════════════════════════════════════ */
+.dl-grid{
+  display:grid;
+  grid-template-columns:1fr 300px;
+  gap:16px;align-items:start;
+}
+.url-area{
+  width:100%;min-height:110px;padding:14px;
+  background:var(--input);
+  border:2px solid var(--border);border-radius:10px;
+  color:var(--t1);font-size:13px;resize:vertical;
+  line-height:1.6;
+  transition:border-color var(--trans);
+}
+.url-area:focus{border-color:var(--accent)}
+.url-area::placeholder{color:var(--t3)}
+
+/* Format toggle */
+.fmt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fmt-card{
+  padding:16px;border-radius:12px;
+  background:var(--hover);
+  cursor:pointer;border:2px solid transparent;
+  transition:all var(--trans);
+}
+.fmt-card:hover{border-color:var(--accent)}
+.fmt-card.active{
+  background:var(--accent);border-color:var(--accent);
+}
+.fmt-card h4{font-size:13px;font-weight:700;margin-bottom:3px}
+.fmt-card p{font-size:11px;color:var(--t3)}
+.fmt-card.active p{color:#c0c0e0}
+
+/* Options row */
+.opts-row{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:16px;align-items:start;
+}
+.opt-group label{
+  display:block;font-size:11px;font-weight:700;
+  color:var(--t2);margin-bottom:8px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.select-input{
+  width:100%;padding:10px 14px;
+  background:var(--hover);border:1px solid var(--border);
+  border-radius:10px;color:var(--t1);font-size:13px;
+  cursor:pointer;
+}
+.select-input:focus{border-color:var(--accent)}
+
+/* Toggle switch */
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;
+}
+.toggle-row span{font-size:13px;color:var(--t2)}
+.toggle{
+  position:relative;width:44px;height:24px;
+}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;
+  background:var(--hover);border-radius:24px;
+  transition:var(--trans);cursor:pointer;
+}
+.toggle-slider:before{
+  content:'';position:absolute;
+  width:18px;height:18px;border-radius:50%;
+  background:#fff;top:3px;left:3px;
+  transition:var(--trans);
+}
+.toggle input:checked + .toggle-slider{background:var(--accent)}
+.toggle input:checked + .toggle-slider:before{transform:translateX(20px)}
+
+/* Buttons */
+.btn{
+  padding:12px 22px;border-radius:10px;
+  font-size:13px;font-weight:700;
+  transition:all var(--trans);
+}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-h)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:var(--card);color:var(--t2)}
+.btn-ghost:hover{background:var(--hover);color:var(--t1)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:var(--green-h)}
+.btn-red{background:transparent;color:var(--t3)}
+.btn-red:hover{background:var(--red);color:#fff}
+.btn-sm{padding:7px 14px;font-size:11px;border-radius:8px}
+
+/* Action bar */
+.action-bar{
+  display:flex;gap:10px;align-items:center;
+  padding-top:4px;
+}
+.action-bar .btn-primary{flex:1;padding:14px}
+.btn-icon{
+  width:48px;height:48px;border-radius:10px;
+  background:var(--card);color:var(--t3);
+  font-size:18px;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;
+}
+.btn-icon:hover{background:var(--red);color:#fff}
+
+/* Progress */
+.progress-bar-wrap{
+  background:var(--border);border-radius:6px;
+  height:6px;overflow:hidden;margin:10px 0 6px;
+}
+.progress-bar-fill{
+  height:100%;border-radius:6px;
+  background:var(--accent);width:0%;
+  transition:width .3s ease;
+}
+.progress-bar-fill.green{background:var(--green)}
+.prog-row{
+  display:flex;align-items:center;
+  justify-content:space-between;margin-bottom:4px;
+}
+.prog-label{font-size:13px;font-weight:700;color:var(--t1)}
+.prog-pct{font-size:13px;font-weight:700;color:var(--accent)}
+.prog-status{font-size:11px;color:var(--t3);line-height:1.5}
+
+/* Queue items */
+.queue-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;border-radius:8px;
+  background:var(--hover);margin-bottom:4px;
+  font-size:12px;color:var(--t2);
+}
+.queue-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--accent);flex-shrink:0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LIBRARY PAGE
+═══════════════════════════════════════════════════════ */
+.lib-grid{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:16px;height:calc(100vh - 160px);
+}
+.file-panel{
+  background:var(--card);border-radius:var(--radius);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.file-panel-header{padding:14px 14px 10px;flex-shrink:0}
+.search-row{display:flex;gap:8px}
+.search-input{
+  flex:1;padding:8px 12px;
+  background:var(--hover);border:1px solid var(--border);
+  border-radius:8px;color:var(--t1);font-size:12px;
+}
+.search-input:focus{border-color:var(--accent)}
+.sort-select{
+  padding:8px 10px;
+  background:var(--hover);border:1px solid var(--border);
+  border-radius:8px;color:var(--t1);font-size:11px;cursor:pointer;
+}
+.file-divider{height:1px;background:var(--border);margin:10px 0}
+.file-list{flex:1;overflow-y:auto;padding:4px 8px 8px}
+.file-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;
+  cursor:pointer;margin-bottom:3px;
+  transition:background var(--trans);
+}
+.file-item:hover{background:var(--hover)}
+.file-item.playing{background:var(--accent-lo)}
+.file-badge{
+  width:32px;height:32px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:#fff;flex-shrink:0;
+}
+.badge-v{background:var(--accent)}
+.badge-a{background:var(--green)}
+.file-info{flex:1;min-width:0}
+.file-name{
+  font-size:12px;font-weight:600;color:var(--t1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.file-size{font-size:10px;color:var(--t3);margin-top:1px}
+.file-actions{display:flex;gap:4px;opacity:0;transition:opacity var(--trans)}
+.file-item:hover .file-actions{opacity:1}
+.file-act-btn{
+  width:26px;height:26px;border-radius:6px;
+  background:var(--hover);color:var(--t3);
+  font-size:13px;display:flex;align-items:center;justify-content:center;
+}
+.file-act-btn:hover{background:var(--red);color:#fff}
+
+/* Player panel */
+.player-panel{
+  background:var(--card);border-radius:var(--radius);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.video-wrap{
+  flex:1;background:#000;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  min-height:200px;
+}
+video{width:100%;height:100%;object-fit:contain;display:block}
+.no-video-msg{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  color:var(--t3);text-align:center;gap:8px;
+}
+.no-video-msg .big-icon{font-size:48px;opacity:.3}
+.no-video-msg p{font-size:13px}
+.no-video-msg small{font-size:11px;opacity:.6}
+
+/* Player controls bar */
+.player-ctrl{
+  background:var(--ctrl);padding:14px 18px 16px;flex-shrink:0;
+}
+.track-name{
+  text-align:center;font-size:12px;
+  color:var(--t2);margin-bottom:10px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.seek-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.time-lbl{font-size:11px;color:var(--t3);width:38px;flex-shrink:0}
+.time-lbl.right{text-align:right}
+input[type=range]{
+  -webkit-appearance:none;flex:1;height:4px;
+  background:var(--border);border-radius:2px;cursor:pointer;
+  outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:#fff;border:2px solid var(--accent);
+  cursor:pointer;transition:transform .1s;
+}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.2)}
+.ctrl-row{
+  display:flex;align-items:center;
+  justify-content:space-between;
+}
+.ctrl-grp{display:flex;align-items:center;gap:4px}
+.ctrl-btn{
+  width:34px;height:34px;border-radius:8px;
+  background:transparent;color:var(--t3);
+  font-size:15px;display:flex;align-items:center;justify-content:center;
+}
+.ctrl-btn:hover{background:var(--hover);color:var(--t1)}
+.ctrl-btn.active{color:var(--accent)}
+.play-btn{
+  width:52px;height:52px;border-radius:50%;
+  background:#fff;color:var(--accent);
+  font-size:20px;display:flex;align-items:center;
+  justify-content:center;margin:0 8px;
+  box-shadow:0 4px 14px rgba(99,102,241,.3);
+}
+.play-btn:hover{transform:scale(1.05);background:#f0f0ff}
+.vol-grp{display:flex;align-items:center;gap:8px}
+.vol-grp input{width:80px}
+.speed-sel{
+  padding:5px 8px;background:var(--hover);
+  border:1px solid var(--border);border-radius:6px;
+  color:var(--t2);font-size:11px;cursor:pointer;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SPACE SAVER PAGE
+═══════════════════════════════════════════════════════ */
+.ss-grid{
+  display:grid;grid-template-columns:1fr 300px;gap:16px;
+}
+.preset-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.preset-card{
+  padding:16px;border-radius:12px;
+  background:var(--hover);cursor:pointer;
+  border:2px solid transparent;transition:all var(--trans);
+}
+.preset-card:hover{border-color:var(--accent)}
+.preset-card.active{
+  background:var(--accent-lo);border-color:var(--accent);
+}
+.preset-card h4{font-size:12px;font-weight:700;margin-bottom:4px}
+.preset-card p{font-size:11px}
+.p-green{color:var(--green)}
+.p-accent{color:var(--accent)}
+.p-amber{color:var(--amber)}
+.p-violet{color:var(--violet)}
+
+.size-strip{
+  display:flex;justify-content:space-between;
+  align-items:center;padding:10px 14px;
+  background:var(--hover);border-radius:8px;margin-top:6px;
+}
+.size-strip span{font-size:12px;color:var(--t2)}
+.size-strip strong{font-size:12px;color:var(--green);font-weight:700}
+
+.result-row{
+  display:flex;justify-content:space-between;
+  padding:7px 0;border-bottom:1px solid var(--border);
+}
+.result-row:last-child{border:none}
+.result-row span{font-size:12px;color:var(--t3)}
+.result-row strong{font-size:12px;color:var(--t1)}
+.result-row strong.green{color:var(--green)}
+
+/* ═══════════════════════════════════════════════════════
+   HISTORY PAGE
+═══════════════════════════════════════════════════════ */
+.hist-table{width:100%;border-collapse:collapse}
+.hist-table th{
+  text-align:left;font-size:11px;font-weight:700;
+  color:var(--t3);padding:10px 14px;
+  background:var(--card);text-transform:uppercase;
+  letter-spacing:.5px;position:sticky;top:0;z-index:1;
+}
+.hist-table td{
+  padding:10px 14px;font-size:12px;color:var(--t1);
+  border-bottom:1px solid var(--border);
+}
+.hist-table tr:hover td{background:var(--hover)}
+.hist-badge{
+  display:inline-flex;align-items:center;
+  gap:4px;padding:3px 8px;border-radius:20px;
+  font-size:10px;font-weight:700;
+}
+.hist-v{background:var(--accent-lo);color:var(--accent)}
+.hist-a{background:#0d2d1a;color:var(--green)}
+.hist-gone{
+  font-size:11px;color:var(--t3);padding:4px 10px;
+  background:var(--hover);border-radius:6px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SETTINGS PAGE
+═══════════════════════════════════════════════════════ */
+.settings-grid{max-width:700px}
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid var(--border);
+  gap:20px;
+}
+.setting-row:last-child{border:none}
+.setting-label{font-size:13px;color:var(--t1);min-width:160px}
+.setting-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.setting-control{flex:1;display:flex;justify-content:flex-end}
+
+.text-input{
+  padding:9px 12px;background:var(--hover);
+  border:1px solid var(--border);border-radius:8px;
+  color:var(--t1);font-size:13px;width:100%;
+}
+.text-input:focus{border-color:var(--accent)}
+
+.ffmpeg-status{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--t2);
+}
+.ffmpeg-dot{
+  width:8px;height:8px;border-radius:50%;
+}
+.ffmpeg-dot.ok{background:var(--green)}
+.ffmpeg-dot.err{background:var(--red)}
+
+/* ═══════════════════════════════════════════════════════
+   PLAYLIST MODAL
+═══════════════════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity var(--trans);
+}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{
+  background:var(--card);border-radius:18px;
+  width:min(680px,94vw);max-height:82vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 25px 60px rgba(0,0,0,.5);
+  transform:translateY(20px);transition:transform var(--trans);
+}
+.modal-overlay.open .modal{transform:none}
+.modal-header{
+  padding:20px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.modal-header h2{font-size:16px;font-weight:700}
+.modal-close{
+  width:32px;height:32px;border-radius:8px;
+  background:var(--hover);color:var(--t2);font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-close:hover{background:var(--red);color:#fff}
+.modal-body{flex:1;overflow-y:auto;padding:12px 16px}
+.modal-footer{
+  padding:16px 24px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;gap:10px;
+}
+.playlist-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:8px;margin-bottom:4px;
+  cursor:pointer;transition:background var(--trans);
+}
+.playlist-item:hover{background:var(--hover)}
+.playlist-item.checked{background:var(--accent-lo)}
+.pl-check{
+  width:18px;height:18px;border-radius:4px;
+  border:2px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:transparent;transition:all var(--trans);
+}
+.playlist-item.checked .pl-check{
+  background:var(--accent);border-color:var(--accent);color:#fff;
+}
+.pl-num{font-size:11px;color:var(--t3);width:28px;flex-shrink:0}
+.pl-title{flex:1;font-size:12px;font-weight:500;color:var(--t1)}
+.pl-dur{font-size:11px;color:var(--t3);flex-shrink:0}
+.select-all-row{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;margin-bottom:8px;
+  background:var(--hover);border-radius:8px;
+}
+.select-all-row label{font-size:12px;color:var(--t2);cursor:pointer}
+
+/* ═══════════════════════════════════════════════════════
+   LOADER / TOASTS
+═══════════════════════════════════════════════════════ */
+.spinner{
+  width:16px;height:16px;border:2px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .6s linear infinite;display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#toast-container{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  display:flex;flex-direction:column;gap:8px;
+}
+.toast{
+  padding:12px 18px;border-radius:10px;
+  font-size:13px;color:#fff;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+  animation:slideIn .3s ease;
+  max-width:320px;
+}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+.toast.info{background:var(--accent)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+
+/* ═══════════════════════════════════════════════════════
+   DRAG HIGHLIGHT
+═══════════════════════════════════════════════════════ */
+.drag-over{
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 3px rgba(99,102,241,.25);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE TWEAKS
+═══════════════════════════════════════════════════════ */
+@media(max-width:900px){
+  .dl-grid,.ss-grid{grid-template-columns:1fr}
+  .lib-grid{grid-template-columns:1fr;height:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    MediaVault Pro
+    <span>Universal Downloader</span>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPage('download')">
+      <div class="nav-icon">⬇</div> Download
+    </button>
+    <button class="nav-btn" onclick="showPage('library')">
+      <div class="nav-icon">📁</div> Library
+    </button>
+    <button class="nav-btn" onclick="showPage('spacesaver')">
+      <div class="nav-icon">🗜</div> Space Saver
+    </button>
+    <button class="nav-btn" onclick="showPage('history')">
+      <div class="nav-icon">🕒</div> History
+    </button>
+    <button class="nav-btn" onclick="showPage('settings')">
+      <div class="nav-icon">⚙</div> Settings
+    </button>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="storage-info" id="storageInfo">Downloads: —</div>
+
+    <div style="padding:0 4px;margin-bottom:6px">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:6px">Theme</div>
+      <div class="theme-row">
+        <button class="theme-btn active" onclick="setTheme('dark')" id="theme-dark">Dark</button>
+        <button class="theme-btn" onclick="setTheme('light')" id="theme-light">Light</button>
+      </div>
+    </div>
+
+    <button class="sidebar-action-btn" onclick="updateYtdlp()">↺ Update yt-dlp</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════════════ -->
+<main id="main">
+
+<!-- ━━━━ DOWNLOAD PAGE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page active" id="page-download">
+  <div class="page-hero">
+    <div>
+      <h1>Download Media</h1>
+      <div class="sub">YouTube · Playlists · Spotify</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="dl-grid">
+      <!-- LEFT -->
+      <div>
+        <!-- URL Input -->
+        <div class="card">
+          <div class="card-hdr">
+            <h3>Paste URLs</h3>
+            <div class="badge">one per line</div>
+          </div>
+          <div class="card-body">
+            <textarea class="url-area" id="urlInput"
+              placeholder="https://www.youtube.com/watch?v=...&#10;https://open.spotify.com/track/..."
+              rows="5"></textarea>
+          </div>
+        </div>
+
+        <!-- Format -->
+        <div class="card">
+          <div class="card-hdr"><h3>Format</h3></div>
+          <div class="card-body">
+            <div class="fmt-grid">
+              <div class="fmt-card active" id="fmt-video" onclick="setFormat('video')">
+                <h4>Video</h4>
+                <p>MP4, MKV, WEBM</p>
+              </div>
+              <div class="fmt-card" id="fmt-audio" onclick="setFormat('audio')">
+                <h4>Audio</h4>
+                <p>MP3, AAC, FLAC</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="card">
+          <div class="card-hdr"><h3>Options</h3></div>
+          <div class="card-body">
+            <div class="opts-row">
+              <div class="opt-group">
+                <label>Quality</label>
+                <select class="select-input" id="qualitySelect">
+                  <option value="best">Best Available</option>
+                  <option value="1080p">1080p Full HD</option>
+                  <option value="720p">720p HD</option>
+                  <option value="480p">480p SD</option>
+                  <option value="360p">360p</option>
+                </select>
+              </div>
+              <div class="opt-group">
+                <label>Subtitles</label>
+                <div class="toggle-row">
+                  <span>Download .srt file</span>
+                  <label class="toggle">
+                    <input type="checkbox" id="subtitlesToggle">
+                    <div class="toggle-slider"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-bar">
+          <button class="btn btn-primary" id="dlBtn" onclick="startDownload()">
+            ⬇ Start Download
+          </button>
+          <button class="btn btn-icon" id="cancelBtn" onclick="cancelDownload()" title="Cancel" style="display:none">✕</button>
+          <button class="btn btn-ghost" onclick="previewPlaylist()" style="padding:14px 18px;font-size:13px">
+            ≡ Preview Playlist
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <!-- Progress -->
+        <div class="card">
+          <div class="card-hdr">
+            <h3>Progress</h3>
+            <span id="dlPct" style="font-size:13px;font-weight:700;color:var(--accent);margin-left:auto"></span>
+          </div>
+          <div class="card-body">
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" id="dlBar" style="width:0%"></div>
+            </div>
+            <div class="prog-status" id="dlStatus">Ready to download</div>
+          </div>
+        </div>
+
+        <!-- Queue -->
+        <div class="card">
+          <div class="card-hdr">
+            <h3>Queue</h3>
+            <span id="queueCount" style="font-size:11px;color:var(--t3);margin-left:auto"></span>
+          </div>
+          <div class="card-body" id="queueList">
+            <div style="font-size:12px;color:var(--t3);text-align:center;padding:16px 0">
+              No items in queue
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━ LIBRARY PAGE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page" id="page-library">
+  <div class="page-hero">
+    <div style="flex:1">
+      <h1>Library & Player</h1>
+      <div class="sub">Your downloaded media files</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="loadLibrary()">↺ Refresh</button>
+  </div>
+  <div class="page-body" style="overflow:hidden">
+    <div class="lib-grid">
+      <!-- File list -->
+      <div class="file-panel">
+        <div class="file-panel-header">
+          <div class="search-row">
+            <input type="text" class="search-input" id="libSearch"
+              placeholder="Search files..." oninput="loadLibrary()">
+            <select class="sort-select" id="libSort" onchange="loadLibrary()">
+              <option value="date">Date</option>
+              <option value="name">Name</option>
+              <option value="size">Size</option>
+            </select>
+          </div>
+          <div class="file-divider"></div>
+        </div>
+        <div class="file-list" id="fileList">
+          <div style="text-align:center;color:var(--t3);padding:24px;font-size:13px">
+            Loading...
+          </div>
+        </div>
+        <div style="padding:8px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--t3)" id="nowPlayingBar">
+          Select a file to play
+        </div>
+      </div>
+
+      <!-- Player -->
+      <div class="player-panel">
+        <div class="video-wrap" id="videoWrap">
+          <video id="videoEl" style="display:none"
+            onended="onVideoEnded()"
+            ontimeupdate="updateSeek()"
+            onloadedmetadata="onVideoLoaded()"></video>
+          <div class="no-video-msg" id="noVideoMsg">
+            <div class="big-icon">▶</div>
+            <p>Select a file from the list to play</p>
+            <small>Double-click for fullscreen · Space to pause</small>
+          </div>
+        </div>
+
+        <div class="player-ctrl">
+          <div class="track-name" id="trackName">Nothing playing</div>
+
+          <div class="seek-row">
+            <span class="time-lbl" id="timeCur">0:00</span>
+            <input type="range" id="seekBar" min="0" max="100" value="0"
+              oninput="seekTo(this.value)">
+            <span class="time-lbl right" id="timeTot">0:00</span>
+          </div>
+
+          <div class="ctrl-row">
+            <!-- Left: loop + fullscreen -->
+            <div class="ctrl-grp">
+              <button class="ctrl-btn" id="loopBtn" onclick="toggleLoop()" title="Loop">↺</button>
+              <button class="ctrl-btn" onclick="toggleFS()" title="Fullscreen">⤢</button>
+            </div>
+
+            <!-- Centre: transport -->
+            <div class="ctrl-grp">
+              <button class="ctrl-btn" onclick="seekRel(-30)" title="-30s">⏮</button>
+              <button class="ctrl-btn" onclick="seekRel(-10)" title="-10s">◀◀</button>
+              <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
+              <button class="ctrl-btn" onclick="seekRel(10)" title="+10s">▶▶</button>
+              <button class="ctrl-btn" onclick="seekRel(30)" title="+30s">⏭</button>
+            </div>
+
+            <!-- Right: volume + speed -->
+            <div class="ctrl-grp">
+              <div class="vol-grp">
+                <span style="font-size:13px;color:var(--t3)">🔊</span>
+                <input type="range" id="volBar" min="0" max="100" value="80"
+                  oninput="setVolume(this.value)">
+              </div>
+              <select class="speed-sel" id="speedSel" onchange="setSpeed(this.value)">
+                <option value="0.5">0.5×</option>
+                <option value="0.75">0.75×</option>
+                <option value="1" selected>1×</option>
+                <option value="1.25">1.25×</option>
+                <option value="1.5">1.5×</option>
+                <option value="2">2×</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━ SPACE SAVER PAGE ━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page" id="page-spacesaver">
+  <div class="page-hero green-accent">
+    <div>
+      <h1>Space Saver</h1>
+      <div class="sub">Re-encode with H.265 · Save 40–60% disk space</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="ss-grid">
+      <!-- LEFT -->
+      <div>
+        <!-- File select -->
+        <div class="card">
+          <div class="card-hdr">
+            <h3>Select File</h3>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto"
+              onclick="document.getElementById('ssFileInput').click()">Browse</button>
+            <input type="file" id="ssFileInput" accept="video/*" style="display:none"
+              onchange="ssPickFile(this)">
+          </div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--t3);margin-bottom:8px" id="ssFileName">
+              No file selected — or click a video from the list on the right
+            </div>
+            <div class="size-strip" id="ssSizeStrip">
+              <span id="ssOrigSize">Original: —</span>
+              <strong id="ssEstSize">Estimated output: —</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="card">
+          <div class="card-hdr"><h3>Compression Preset</h3></div>
+          <div class="card-body">
+            <div class="preset-grid" id="presetGrid">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Replace toggle -->
+        <div class="card">
+          <div class="card-hdr"><h3>Options</h3></div>
+          <div class="card-body">
+            <div class="toggle-row">
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--t1)">Replace original file</div>
+                <div style="font-size:11px;color:var(--t3);margin-top:2px">Delete source after compression to save extra space</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="ssReplaceToggle">
+                <div class="toggle-slider"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-green" id="ssBtn" onclick="startCompress()"
+          style="width:100%;padding:16px;font-size:14px;border-radius:12px">
+          Compress Now
+        </button>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <!-- Progress -->
+        <div class="card">
+          <div class="card-hdr">
+            <h3>Progress</h3>
+            <span id="ssPct" style="font-size:13px;font-weight:700;color:var(--green);margin-left:auto"></span>
+          </div>
+          <div class="card-body">
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill green" id="ssBar" style="width:0%"></div>
+            </div>
+            <div class="prog-status" id="ssStatus">Select a video to compress.</div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="card">
+          <div class="card-hdr"><h3>Last Result</h3></div>
+          <div class="card-body" id="ssResults">
+            <div class="result-row"><span>Original size</span><strong id="r-orig">—</strong></div>
+            <div class="result-row"><span>Compressed</span><strong id="r-new">—</strong></div>
+            <div class="result-row"><span>Space saved</span><strong id="r-save" class="green">—</strong></div>
+            <div class="result-row"><span>Reduction</span><strong id="r-pct" class="green">—</strong></div>
+          </div>
+        </div>
+
+        <!-- Video list -->
+        <div class="card" style="flex:1">
+          <div class="card-hdr">
+            <h3>Your Videos</h3>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto"
+              onclick="loadSSList()">↺</button>
+          </div>
+          <div class="card-body" id="ssFileList" style="max-height:260px;overflow-y:auto">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━ HISTORY PAGE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page" id="page-history">
+  <div class="page-hero">
+    <div style="flex:1">
+      <h1>Download History</h1>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="exportHistory()">↓ Export CSV</button>
+      <button class="btn btn-ghost btn-sm" id="clearHistBtn"
+        style="color:var(--red)" onclick="clearHistory()">Clear All</button>
+    </div>
+  </div>
+  <div class="page-body">
+    <div style="margin-bottom:12px">
+      <input type="text" class="text-input" id="histSearch"
+        placeholder="Search history..." oninput="loadHistory()"
+        style="max-width:400px">
+    </div>
+    <div style="background:var(--card);border-radius:var(--radius);overflow:hidden">
+      <table class="hist-table" style="width:100%">
+        <thead>
+          <tr>
+            <th>Title</th><th>Type</th><th>Quality</th>
+            <th>Date</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="histBody">
+          <tr><td colspan="5" style="text-align:center;color:var(--t3);padding:32px">
+            No downloads yet.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━ SETTINGS PAGE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page" id="page-settings">
+  <div class="page-hero">
+    <h1>Settings</h1>
+  </div>
+  <div class="page-body">
+    <div class="settings-grid">
+
+      <!-- Download Location -->
+      <div class="card">
+        <div class="card-hdr"><h3>Download Location</h3></div>
+        <div class="card-body">
+          <div style="display:flex;gap:10px;margin-bottom:10px">
+            <input type="text" class="text-input" id="folderInput" value="downloads">
+            <button class="btn btn-primary btn-sm" onclick="saveFolder()">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Defaults -->
+      <div class="card">
+        <div class="card-hdr"><h3>Download Defaults</h3></div>
+        <div class="card-body settings-grid">
+          <div class="setting-row">
+            <div class="setting-label">Default Quality</div>
+            <div class="setting-control">
+              <select class="select-input" id="setQuality" style="width:140px"
+                onchange="saveSetting('default_quality',this.value)">
+                <option value="best">Best</option>
+                <option value="1080p">1080p</option>
+                <option value="720p">720p</option>
+                <option value="480p">480p</option>
+                <option value="360p">360p</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Audio Format</div>
+            <div class="setting-control">
+              <select class="select-input" id="setAudioFmt" style="width:140px"
+                onchange="saveSetting('audio_format',this.value)">
+                <option value="mp3">MP3</option>
+                <option value="aac">AAC</option>
+                <option value="flac">FLAC</option>
+                <option value="opus">Opus</option>
+                <option value="m4a">M4A</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              Download Subtitles
+              <div class="setting-sub">Auto-download .srt files</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle">
+                <input type="checkbox" id="setSubs"
+                  onchange="saveSetting('download_subtitles',this.checked)">
+                <div class="toggle-slider"></div>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              Retries on Failure
+            </div>
+            <div class="setting-control">
+              <select class="select-input" id="setRetries" style="width:80px"
+                onchange="saveSetting('max_retries',parseInt(this.value))">
+                <option>0</option><option>1</option>
+                <option value="3" selected>3</option>
+                <option>5</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance -->
+      <div class="card">
+        <div class="card-hdr"><h3>Performance</h3></div>
+        <div class="card-body">
+          <div class="setting-row">
+            <div class="setting-label">
+              Speed Limit
+              <div class="setting-sub" id="speedLbl">Unlimited</div>
+            </div>
+            <div class="setting-control" style="width:200px">
+              <input type="range" id="speedSlider" min="0" max="10000" value="0"
+                style="width:100%" oninput="onSpeedChange(this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FFmpeg -->
+      <div class="card">
+        <div class="card-hdr"><h3>FFmpeg</h3></div>
+        <div class="card-body">
+          <div class="setting-row">
+            <div>
+              <div class="ffmpeg-status">
+                <div class="ffmpeg-dot" id="ffmpegDot"></div>
+                <span id="ffmpegStatusTxt">Checking...</span>
+              </div>
+              <div class="setting-sub" style="margin-top:4px">
+                Required for thumbnails, audio extraction & Space Saver
+              </div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="ffmpegInstallBtn"
+              onclick="installFFmpeg()" style="margin-left:auto">
+              Install FFmpeg
+            </button>
+          </div>
+          <div class="progress-bar-wrap" id="ffmpegBarWrap" style="display:none">
+            <div class="progress-bar-fill green" id="ffmpegBar" style="width:0%"></div>
+          </div>
+          <div class="prog-status" id="ffmpegMsg" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- yt-dlp -->
+      <div class="card">
+        <div class="card-hdr"><h3>yt-dlp</h3></div>
+        <div class="card-body">
+          <div class="setting-row">
+            <div>
+              <div style="font-size:13px;color:var(--t1)">Update yt-dlp</div>
+              <div class="setting-sub">Keep yt-dlp updated for best compatibility</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="updateYtdlp()"
+              style="margin-left:auto">Update Now</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</main><!-- end #main -->
+
+<!-- ═══════════════════════════════════════════════════
+     PLAYLIST MODAL
+═══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="playlistModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="plModalTitle">Playlist Preview</h2>
+      <button class="modal-close" onclick="closePLModal()">✕</button>
+    </div>
+    <div class="modal-body" id="plModalBody">
+      <div style="text-align:center;padding:40px">
+        <div class="spinner"></div>
+        <div style="margin-top:12px;font-size:13px;color:var(--t3)">Fetching playlist info...</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="downloadSelected()">
+        ⬇ Download Selected
+      </button>
+      <button class="btn btn-ghost" onclick="closePLModal()">Cancel</button>
+      <span style="font-size:12px;color:var(--t3);margin-left:auto" id="plSelectCount"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════ -->
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let currentFormat   = 'video';
+let currentPreset   = 'Balanced (Recommended)';
+let selectedSSFile  = null;
+let plEntries       = [];
+let plChecked       = [];
+let isLooping       = false;
+let dlEventSource   = null;
+let compEventSource = null;
+
+// ── Page Navigation ───────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.trim().toLowerCase().startsWith(
+      name === 'spacesaver' ? 'space' :
+      name === 'history' ? 'hist' : name
+    )) b.classList.add('active');
+  });
+  if (name === 'library')    loadLibrary();
+  if (name === 'history')    loadHistory();
+  if (name === 'spacesaver') { loadSSList(); loadPresets(); }
+  if (name === 'settings')   loadSettings();
+  updateStorage();
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('theme-' + t)?.classList.add('active');
+  fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({theme: t})
+  });
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='info', dur=4000) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.animation = 'slideIn .3s ease reverse'; setTimeout(() => t.remove(), 300); }, dur);
+}
+
+// ── Storage ───────────────────────────────────────────────────────────────────
+function updateStorage() {
+  fetch('/api/storage').then(r => r.json()).then(d => {
+    document.getElementById('storageInfo').textContent =
+      `Downloads: ${fmtSize(d.bytes)}  (${d.count} files)`;
+  });
+}
+
+// ── Format ────────────────────────────────────────────────────────────────────
+function setFormat(f) {
+  currentFormat = f;
+  document.getElementById('fmt-video').classList.toggle('active', f === 'video');
+  document.getElementById('fmt-audio').classList.toggle('active', f === 'audio');
+}
+
+// ── Download ──────────────────────────────────────────────────────────────────
+function startDownload() {
+  const raw = document.getElementById('urlInput').value.trim();
+  if (!raw) { toast('Enter at least one URL', 'error'); return; }
+  const urls = raw.split('\n').map(u => u.trim()).filter(Boolean);
+
+  const body = {
+    urls,
+    format:    currentFormat,
+    quality:   document.getElementById('qualitySelect').value,
+    subtitles: document.getElementById('subtitlesToggle').checked,
+  };
+
+  fetch('/api/download', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  }).then(r => r.json()).then(d => {
+    if (d.error) { toast(d.error, 'error'); return; }
+    setDLBusy(true);
+    updateQueueUI(urls);
+    startDLEvents();
+  });
+}
+
+function cancelDownload() {
+  fetch('/api/download/cancel', {method: 'POST'});
+}
+
+function setDLBusy(busy) {
+  const btn = document.getElementById('dlBtn');
+  const cancel = document.getElementById('cancelBtn');
+  btn.disabled = busy;
+  btn.textContent = busy ? '⏳ Downloading...' : '⬇ Start Download';
+  cancel.style.display = busy ? 'flex' : 'none';
+}
+
+function updateQueueUI(urls) {
+  const list = document.getElementById('queueList');
+  document.getElementById('queueCount').textContent = `${urls.length} item(s)`;
+  list.innerHTML = urls.map(u =>
+    `<div class="queue-item"><div class="queue-dot"></div>${u.slice(0,72)}${u.length>72?'...':''}</div>`
+  ).join('');
+}
+
+function clearQueueUI() {
+  document.getElementById('queueList').innerHTML =
+    '<div style="font-size:12px;color:var(--t3);text-align:center;padding:16px 0">No items in queue</div>';
+  document.getElementById('queueCount').textContent = '';
+}
+
+function startDLEvents() {
+  if (dlEventSource) dlEventSource.close();
+  dlEventSource = new EventSource('/api/download/events');
+  dlEventSource.onmessage = e => {
+    const data = JSON.parse(e.data);
+    if (data.type === 'progress') {
+      const pct = Math.round(data.value * 100);
+      document.getElementById('dlBar').style.width = pct + '%';
+      document.getElementById('dlPct').textContent = pct + '%';
+    } else if (data.type === 'status') {
+      document.getElementById('dlStatus').textContent = data.message;
+    } else if (data.type === 'finish') {
+      setDLBusy(false);
+      clearQueueUI();
+      document.getElementById('dlBar').style.width = '0%';
+      document.getElementById('dlPct').textContent = '';
+      if (data.status === 'completed') {
+        document.getElementById('dlStatus').textContent = 'All downloads completed!';
+        toast('Downloads completed!', 'success');
+      } else if (data.status === 'cancelled') {
+        document.getElementById('dlStatus').textContent = 'Download cancelled.';
+      } else {
+        document.getElementById('dlStatus').textContent = 'Download failed. Check URL or update yt-dlp.';
+        toast('Download failed', 'error');
+      }
+      dlEventSource.close();
+      updateStorage();
+    }
+  };
+}
+
+// ── Playlist Preview ──────────────────────────────────────────────────────────
+function previewPlaylist() {
+  const url = document.getElementById('urlInput').value.split('\n')[0].trim();
+  if (!url) { toast('Enter a URL first', 'error'); return; }
+
+  document.getElementById('playlistModal').classList.add('open');
+  document.getElementById('plModalBody').innerHTML = `
+    <div style="text-align:center;padding:40px">
+      <div class="spinner"></div>
+      <div style="margin-top:12px;font-size:13px;color:var(--t3)">Fetching playlist info...</div>
+    </div>`;
+
+  fetch('/api/playlist/info', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({url})
+  }).then(r => r.json()).then(d => {
+    if (d.error) {
+      document.getElementById('plModalBody').innerHTML =
+        `<div style="padding:40px;text-align:center;color:var(--red)">${d.error}</div>`;
+      return;
+    }
+    plEntries = d.entries;
+    plChecked = plEntries.map(() => true);
+    renderPLModal();
+  });
+}
+
+function renderPLModal() {
+  document.getElementById('plModalTitle').textContent =
+    `Playlist Preview  (${plEntries.length} videos)`;
+  updatePLCount();
+
+  let html = `<div class="select-all-row">
+    <input type="checkbox" id="selAll" checked onchange="toggleSelectAll(this.checked)">
+    <label for="selAll">Select All</label>
+  </div>`;
+
+  plEntries.forEach((e, i) => {
+    const dur = fmtDuration(e.duration);
+    const title = (e.title || 'Unknown').slice(0, 65);
+    html += `<div class="playlist-item ${plChecked[i]?'checked':''}"
+      onclick="togglePLItem(${i})">
+      <div class="pl-check">${plChecked[i]?'✓':''}</div>
+      <span class="pl-num">${i+1}.</span>
+      <span class="pl-title">${title}</span>
+      <span class="pl-dur">${dur}</span>
+    </div>`;
+  });
+  document.getElementById('plModalBody').innerHTML = html;
+}
+
+function togglePLItem(i) {
+  plChecked[i] = !plChecked[i];
+  renderPLModal();
+}
+function toggleSelectAll(v) {
+  plChecked = plEntries.map(() => v);
+  renderPLModal();
+}
+function updatePLCount() {
+  const n = plChecked.filter(Boolean).length;
+  document.getElementById('plSelectCount').textContent =
+    `${n} of ${plEntries.length} selected`;
+}
+function closePLModal() {
+  document.getElementById('playlistModal').classList.remove('open');
+}
+function downloadSelected() {
+  const urls = plEntries.filter((_, i) => plChecked[i]).map(e => e.url).filter(Boolean);
+  if (!urls.length) { toast('Nothing selected', 'error'); return; }
+  document.getElementById('urlInput').value = urls.join('\n');
+  closePLModal();
+  startDownload();
+}
+
+// ── Library ───────────────────────────────────────────────────────────────────
+function loadLibrary() {
+  const q    = document.getElementById('libSearch')?.value || '';
+  const sort = document.getElementById('libSort')?.value || 'date';
+  fetch(`/api/library?q=${encodeURIComponent(q)}&sort=${sort}`)
+    .then(r => r.json()).then(d => renderFileList(d.files));
+}
+
+function renderFileList(files) {
+  const list = document.getElementById('fileList');
+  if (!files.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--t3);padding:24px;font-size:13px">No media files found.</div>';
+    return;
+  }
+  list.innerHTML = files.map(f => `
+    <div class="file-item" onclick="playFile('${esc(f.name)}')"
+      data-name="${esc(f.name)}">
+      <div class="file-badge ${f.type==='video'?'badge-v':'badge-a'}">
+        ${f.type==='video'?'V':'A'}
+      </div>
+      <div class="file-info">
+        <div class="file-name" title="${esc(f.name)}">${esc(f.name)}</div>
+        <div class="file-size">${fmtSize(f.size)}</div>
+      </div>
+      <div class="file-actions">
+        <a class="file-act-btn" href="/api/library/download/${encodeURIComponent(f.name)}"
+          download title="Download" onclick="event.stopPropagation()">↓</a>
+        <button class="file-act-btn" title="Delete"
+          onclick="event.stopPropagation();deleteFile('${esc(f.name)}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+let currentFile = null;
+function playFile(name) {
+  currentFile = name;
+  const video = document.getElementById('videoEl');
+  const src   = `/api/library/stream/${encodeURIComponent(name)}`;
+  video.src = src;
+  video.style.display = 'block';
+  document.getElementById('noVideoMsg').style.display = 'none';
+  video.play();
+  document.getElementById('trackName').textContent = name;
+  document.getElementById('nowPlayingBar').textContent = '▶ ' + name.slice(0, 50);
+  document.getElementById('playBtn').textContent = '⏸';
+  // Mark active
+  document.querySelectorAll('.file-item').forEach(el => {
+    el.classList.toggle('playing', el.dataset.name === name);
+  });
+}
+
+function deleteFile(name) {
+  if (!confirm(`Delete "${name}"?\nThis cannot be undone.`)) return;
+  fetch('/api/library/delete', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({filename: name})
+  }).then(r => r.json()).then(d => {
+    if (d.ok) { toast('File deleted', 'info'); loadLibrary(); updateStorage(); }
+    else toast(d.error, 'error');
+  });
+}
+
+// ── Video Player ──────────────────────────────────────────────────────────────
+function togglePlay() {
+  const v = document.getElementById('videoEl');
+  if (!v.src) return;
+  if (v.paused) { v.play(); document.getElementById('playBtn').textContent = '⏸'; }
+  else { v.pause(); document.getElementById('playBtn').textContent = '▶'; }
+}
+function seekRel(s) {
+  const v = document.getElementById('videoEl');
+  v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + s));
+}
+function seekTo(val) {
+  const v = document.getElementById('videoEl');
+  if (v.duration) v.currentTime = (val / 100) * v.duration;
+}
+function setVolume(val) {
+  document.getElementById('videoEl').volume = val / 100;
+}
+function setSpeed(val) {
+  document.getElementById('videoEl').playbackRate = parseFloat(val);
+}
+function toggleLoop() {
+  isLooping = !isLooping;
+  document.getElementById('videoEl').loop = isLooping;
+  document.getElementById('loopBtn').classList.toggle('active', isLooping);
+}
+function toggleFS() {
+  const wrap = document.getElementById('videoWrap');
+  if (!document.fullscreenElement) wrap.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+function updateSeek() {
+  const v   = document.getElementById('videoEl');
+  const pct = v.duration ? (v.currentTime / v.duration) * 100 : 0;
+  document.getElementById('seekBar').value = pct;
+  document.getElementById('timeCur').textContent = fmtTime(v.currentTime);
+}
+function onVideoLoaded() {
+  const v = document.getElementById('videoEl');
+  document.getElementById('timeTot').textContent = fmtTime(v.duration);
+}
+function onVideoEnded() {
+  document.getElementById('playBtn').textContent = '▶';
+}
+
+// Keyboard shortcuts on library page
+document.addEventListener('keydown', e => {
+  const page = document.querySelector('.page.active');
+  if (!page || page.id !== 'page-library') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowRight') seekRel(10);
+  if (e.code === 'ArrowLeft')  seekRel(-10);
+  if (e.code === 'ArrowUp')   { const v = document.getElementById('volBar'); v.value = Math.min(100, +v.value+5); setVolume(v.value); }
+  if (e.code === 'ArrowDown') { const v = document.getElementById('volBar'); v.value = Math.max(0, +v.value-5); setVolume(v.value); }
+  if (e.code === 'F11')       { e.preventDefault(); toggleFS(); }
+});
+
+// ── Space Saver ───────────────────────────────────────────────────────────────
+const PRESET_COLORS = {
+  'Maximum Compression':    'p-green',
+  'Balanced (Recommended)': 'p-accent',
+  'High Quality':           'p-amber',
+  'Lossless':               'p-violet',
+};
+
+function loadPresets() {
+  fetch('/api/compress/presets').then(r => r.json()).then(presets => {
+    const grid = document.getElementById('presetGrid');
+    grid.innerHTML = presets.map(p => `
+      <div class="preset-card ${p.name===currentPreset?'active':''}"
+        onclick="selectPreset('${esc(p.name)}')" data-preset="${esc(p.name)}">
+        <h4>${p.name}</h4>
+        <p class="${PRESET_COLORS[p.name]||'p-accent'}">${p.label}</p>
+      </div>`).join('');
+  });
+}
+
+function selectPreset(name) {
+  currentPreset = name;
+  document.querySelectorAll('.preset-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.preset === name);
+  });
+  updateSSEstimate();
+}
+
+function ssPickFile(input) {
+  // For web app — file must be in downloads folder
+  // We'll store just the filename
+  toast('Browse is only for reference. Select from "Your Videos" list.', 'info');
+}
+
+function ssSelectFile(filename, size) {
+  selectedSSFile = filename;
+  document.getElementById('ssFileName').textContent = filename;
+  document.getElementById('ssOrigSize').textContent = `Original: ${fmtSize(size)}`;
+  updateSSEstimate(size);
+}
+
+function updateSSEstimate(origBytes) {
+  if (!origBytes) return;
+  const factors = {
+    'Maximum Compression': 0.40,
+    'Balanced (Recommended)': 0.55,
+    'High Quality': 0.75,
+    'Lossless': 0.90,
+  };
+  const f   = factors[currentPreset] || 0.55;
+  const est = Math.round(origBytes * f);
+  const sav = origBytes - est;
+  document.getElementById('ssEstSize').textContent =
+    `Estimated: ~${fmtSize(est)}  (save ~${fmtSize(sav)})`;
+}
+
+function loadSSList() {
+  fetch('/api/library?sort=date').then(r => r.json()).then(d => {
+    const videos = d.files.filter(f => f.type === 'video');
+    const el = document.getElementById('ssFileList');
+    if (!videos.length) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--t3);text-align:center;padding:16px">No video files found.</div>';
+      return;
+    }
+    el.innerHTML = videos.map(f => `
+      <div class="file-item" onclick="ssSelectFile('${esc(f.name)}',${f.size})">
+        <div class="file-badge badge-v" style="width:28px;height:28px;font-size:10px">V</div>
+        <div class="file-info">
+          <div class="file-name">${esc(f.name)}</div>
+          <div class="file-size">${fmtSize(f.size)}</div>
+        </div>
+      </div>`).join('');
+  });
+}
+
+function startCompress() {
+  if (!selectedSSFile) { toast('Select a video file first', 'error'); return; }
+  const btn = document.getElementById('ssBtn');
+  btn.disabled = true;
+  btn.textContent = 'Compressing...';
+  document.getElementById('ssBar').style.width = '0%';
+  document.getElementById('ssPct').textContent = '';
+  document.getElementById('ssStatus').textContent = 'Starting...';
+  ['r-orig','r-new','r-save','r-pct'].forEach(id =>
+    document.getElementById(id).textContent = '—');
+
+  fetch('/api/compress', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      filename: selectedSSFile,
+      preset:   currentPreset,
+      replace:  document.getElementById('ssReplaceToggle').checked,
+    })
+  }).then(() => startCompEvents());
+}
+
+function startCompEvents() {
+  if (compEventSource) compEventSource.close();
+  compEventSource = new EventSource('/api/compress/events');
+  compEventSource.onmessage = e => {
+    const data = JSON.parse(e.data);
+    if (data.type === 'progress') {
+      const pct = Math.round(data.value * 100);
+      document.getElementById('ssBar').style.width = pct + '%';
+      document.getElementById('ssPct').textContent = pct + '%';
+    } else if (data.type === 'status') {
+      document.getElementById('ssStatus').textContent = data.message;
+    } else if (data.type === 'finish') {
+      const btn = document.getElementById('ssBtn');
+      btn.disabled = false;
+      btn.textContent = 'Compress Now';
+      compEventSource.close();
+      const r = data.result;
+      if (r.error) { toast('Compression failed: ' + r.error, 'error'); return; }
+      document.getElementById('r-orig').textContent = fmtSize(r.original_bytes);
+      document.getElementById('r-new').textContent  = fmtSize(r.output_bytes);
+      document.getElementById('r-save').textContent = fmtSize(r.saved_bytes);
+      document.getElementById('r-pct').textContent  = r.saved_pct.toFixed(1) + '% smaller';
+      toast(`Compressed! Saved ${fmtSize(r.saved_bytes)} (${r.saved_pct.toFixed(1)}% smaller)`, 'success', 6000);
+      loadSSList();
+      updateStorage();
+    }
+  };
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+function loadHistory() {
+  const q = document.getElementById('histSearch')?.value || '';
+  fetch(`/api/history?q=${encodeURIComponent(q)}`).then(r => r.json()).then(rows => {
+    const tbody = document.getElementById('histBody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:32px">No downloads yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => {
+      const tag = r.type === 'video'
+        ? `<span class="hist-badge hist-v">Video</span>`
+        : `<span class="hist-badge hist-a">Audio</span>`;
+      return `<tr>
+        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+          title="${esc(r.title)}">${esc(r.title)}</td>
+        <td>${tag}</td>
+        <td>${r.quality||'—'}</td>
+        <td style="color:var(--t3)">${(r.date||'').slice(0,16)}</td>
+        <td>
+          <button class="btn btn-primary btn-sm"
+            onclick="playFromHistory('${esc(r.path)}','${esc(r.title)}')">
+            ▶ Play
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  });
+}
+
+function playFromHistory(path, title) {
+  const filename = path.split(/[/\\]/).pop();
+  showPage('library');
+  setTimeout(() => playFile(filename), 200);
+}
+
+function exportHistory() {
+  window.open('/api/history/export');
+}
+
+function clearHistory() {
+  if (!confirm('Delete all download history?')) return;
+  fetch('/api/history/clear', {method:'POST'}).then(() => {
+    loadHistory();
+    toast('History cleared', 'info');
+  });
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function loadSettings() {
+  fetch('/api/settings').then(r => r.json()).then(s => {
+    document.getElementById('folderInput').value   = s.download_folder || 'downloads';
+    document.getElementById('setQuality').value    = s.default_quality || 'best';
+    document.getElementById('setAudioFmt').value   = s.audio_format    || 'mp3';
+    document.getElementById('setSubs').checked     = !!s.download_subtitles;
+    document.getElementById('setRetries').value    = String(s.max_retries ?? 3);
+    document.getElementById('speedSlider').value   = s.speed_limit_kb || 0;
+    document.getElementById('speedLbl').textContent =
+      fmtSpeed(s.speed_limit_kb);
+  });
+  checkFFmpeg();
+}
+
+function saveSetting(key, val) {
+  fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({[key]: val})
+  });
+}
+
+function saveFolder() {
+  const folder = document.getElementById('folderInput').value.trim();
+  if (!folder) return;
+  fetch('/api/settings', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({download_folder: folder})
+  }).then(() => toast('Folder saved', 'success'));
+}
+
+function onSpeedChange(val) {
+  saveSetting('speed_limit_kb', parseInt(val));
+  document.getElementById('speedLbl').textContent = fmtSpeed(val);
+}
+
+function checkFFmpeg() {
+  fetch('/api/ffmpeg/status').then(r => r.json()).then(d => {
+    const dot = document.getElementById('ffmpegDot');
+    const txt = document.getElementById('ffmpegStatusTxt');
+    const btn = document.getElementById('ffmpegInstallBtn');
+    if (d.available) {
+      dot.className = 'ffmpeg-dot ok';
+      txt.textContent = `FFmpeg installed  (v${d.version})`;
+      btn.textContent = 'Reinstall';
+      btn.className = 'btn btn-ghost btn-sm';
+    } else {
+      dot.className = 'ffmpeg-dot err';
+      txt.textContent = 'FFmpeg not found';
+      btn.textContent = 'Install FFmpeg';
+      btn.className = 'btn btn-primary btn-sm';
+    }
+  });
+}
+
+function installFFmpeg() {
+  document.getElementById('ffmpegInstallBtn').disabled = true;
+  document.getElementById('ffmpegInstallBtn').textContent = 'Installing...';
+  document.getElementById('ffmpegBarWrap').style.display = 'block';
+  document.getElementById('ffmpegMsg').style.display = 'block';
+  document.getElementById('ffmpegMsg').textContent = 'Downloading FFmpeg...';
+
+  fetch('/api/ffmpeg/install', {method:'POST'})
+    .then(r => r.json()).then(d => {
+      document.getElementById('ffmpegBar').style.width = d.ok ? '100%' : '0%';
+      document.getElementById('ffmpegMsg').textContent = d.message;
+      document.getElementById('ffmpegInstallBtn').disabled = false;
+      if (d.ok) { toast('FFmpeg installed!', 'success'); checkFFmpeg(); }
+      else toast('FFmpeg install failed', 'error');
+    });
+}
+
+function updateYtdlp() {
+  toast('Updating yt-dlp...', 'info', 2000);
+  fetch('/api/ytdlp/update', {method:'POST'}).then(r => r.json()).then(d => {
+    toast(d.message, d.ok ? 'success' : 'error');
+  });
+}
+
+// ── Drag & Drop on URL box ────────────────────────────────────────────────────
+const urlBox = document.getElementById('urlInput');
+urlBox.addEventListener('dragover', e => { e.preventDefault(); urlBox.classList.add('drag-over'); });
+urlBox.addEventListener('dragleave', () => urlBox.classList.remove('drag-over'));
+urlBox.addEventListener('drop', e => {
+  e.preventDefault();
+  urlBox.classList.remove('drag-over');
+  const text = e.dataTransfer.getData('text/uri-list')
+             || e.dataTransfer.getData('text/plain');
+  if (text) urlBox.value = (urlBox.value + '\n' + text).trim();
+});
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function fmtSize(b) {
+  if (b < 1024)       return b + ' B';
+  if (b < 1048576)    return (b/1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+  return (b/1073741824).toFixed(2) + ' GB';
+}
+function fmtTime(s) {
+  s = Math.max(0, Math.floor(s || 0));
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return h ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+}
+function fmtDuration(s) {
+  if (!s) return '--:--';
+  return fmtTime(s);
+}
+function fmtSpeed(kb) {
+  if (!kb || kb == 0) return 'Unlimited';
+  return kb >= 1024 ? (kb/1024).toFixed(1)+' MB/s' : kb+' KB/s';
+}
+function pad(n) { return String(n).padStart(2,'0') }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+updateStorage();
+loadPresets();
+</script>
+</body>
+</html>

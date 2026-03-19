@@ -1,0 +1,11 @@
+{
+  "download_folder": "downloads",
+  "default_quality": "best",
+  "default_format": "video",
+  "theme": "dark",
+  "speed_limit_kb": 0,
+  "download_subtitles": false,
+  "audio_format": "mp3",
+  "video_format": "mp4",
+  "max_retries": 3
+}
