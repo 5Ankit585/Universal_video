@@ -1,13 +1,10 @@
 """
-web_app.py  —  MediaVault Pro Web Server
+app.py  —  MediaVault Pro Web Server
 Flask backend that powers the browser-based UI.
-Run:  py web_app.py
-Then open:  http://0.0.0.0:10000
 """
 
 import os
 import json
-import time
 import threading
 import queue
 from flask import (Flask, render_template, request, jsonify,
@@ -23,11 +20,16 @@ import ffmpeg_manager
 
 ffmpeg_manager.ensure_on_path()
 
-app = Flask(__name__, template_folder="templates",
-            static_folder="static")
+app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["SECRET_KEY"] = "mediavault-pro-2024"
 
 cfg = Settings()
+
+# ── Render: use /tmp/downloads for file storage ───────────────────────────────
+if os.environ.get("RENDER"):
+    _dl_folder = "/tmp/downloads"
+    cfg.set("download_folder", _dl_folder)
+    os.makedirs(_dl_folder, exist_ok=True)
 
 # ── SSE event queues ──────────────────────────────────────────────────────────
 _dl_events   = queue.Queue()
@@ -66,15 +68,13 @@ def index():
 
 @app.route("/api/download", methods=["POST"])
 def api_download():
-    data     = request.json or {}
-    urls     = data.get("urls", [])
-    fmt      = data.get("format", "video")
-    quality  = data.get("quality", "best")
+    data      = request.json or {}
+    urls      = data.get("urls", [])
+    fmt       = data.get("format", "video")
+    quality   = data.get("quality", "best")
     subtitles = data.get("subtitles", False)
-
     if not urls:
         return jsonify({"error": "No URLs provided"}), 400
-
     dm.add_to_queue(urls, fmt, quality, subtitles=subtitles)
     return jsonify({"ok": True, "queued": len(urls)})
 
@@ -85,19 +85,17 @@ def api_cancel():
 
 @app.route("/api/download/events")
 def api_dl_events():
-    """SSE stream for download progress."""
     def generate():
         while True:
             try:
                 event = _dl_events.get(timeout=30)
                 yield f"data: {json.dumps(event)}\n\n"
             except queue.Empty:
-                yield "data: {\"type\":\"ping\"}\n\n"
+                yield 'data: {"type":"ping"}\n\n'
     return Response(
         stream_with_context(generate()),
         mimetype="text/event-stream",
-        headers={"Cache-Control": "no-cache",
-                 "X-Accel-Buffering": "no"})
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 # =============================================================================
 # PLAYLIST API
@@ -108,18 +106,14 @@ def api_playlist_info():
     url = (request.json or {}).get("url", "").strip()
     if not url:
         return jsonify({"error": "No URL"}), 400
-
     result = {"entries": None, "error": None}
     ev     = threading.Event()
-
     def done(entries, error):
         result["entries"] = entries
         result["error"]   = error
         ev.set()
-
     fetch_playlist_info(url, done_cb=done)
     ev.wait(timeout=30)
-
     if result["error"]:
         return jsonify({"error": result["error"]}), 400
     return jsonify({"entries": result["entries"]})
@@ -160,8 +154,7 @@ def api_library():
 @app.route("/api/library/stream/<path:filename>")
 def api_stream(filename):
     folder = os.path.abspath(cfg.get("download_folder") or "downloads")
-    return send_from_directory(folder, filename,
-                               as_attachment=False)
+    return send_from_directory(folder, filename, as_attachment=False)
 
 @app.route("/api/library/download/<path:filename>")
 def api_file_download(filename):
@@ -191,23 +184,16 @@ def api_compress():
     filename = data.get("filename", "")
     preset   = data.get("preset", "Balanced (Recommended)")
     replace  = data.get("replace", False)
-
-    folder = os.path.abspath(cfg.get("download_folder") or "downloads")
-    src    = os.path.join(folder, filename)
-
+    folder   = os.path.abspath(cfg.get("download_folder") or "downloads")
+    src      = os.path.join(folder, filename)
     if not os.path.exists(src):
         return jsonify({"error": "File not found"}), 404
-
     name = os.path.splitext(filename)[0]
     dst  = os.path.join(folder, f"{name}_compressed.mp4")
-
     cancel = threading.Event()
-
     def run():
         result = compress_video(
-            input_path=src,
-            output_path=dst,
-            preset_name=preset,
+            input_path=src, output_path=dst, preset_name=preset,
             progress_callback=lambda v: _comp_events.put(
                 {"type": "progress", "value": round(v, 4)}),
             status_callback=lambda m: _comp_events.put(
@@ -220,7 +206,6 @@ def api_compress():
             except Exception:
                 pass
         _comp_events.put({"type": "finish", "result": result})
-
     threading.Thread(target=run, daemon=True).start()
     return jsonify({"ok": True})
 
@@ -234,18 +219,16 @@ def api_comp_events():
                 if event.get("type") == "finish":
                     break
             except queue.Empty:
-                yield "data: {\"type\":\"ping\"}\n\n"
+                yield 'data: {"type":"ping"}\n\n'
     return Response(
         stream_with_context(generate()),
         mimetype="text/event-stream",
-        headers={"Cache-Control": "no-cache",
-                 "X-Accel-Buffering": "no"})
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 @app.route("/api/compress/presets")
 def api_presets():
     names = get_preset_names()
-    return jsonify([
-        {"name": n, "label": get_preset_label(n)} for n in names])
+    return jsonify([{"name": n, "label": get_preset_label(n)} for n in names])
 
 # =============================================================================
 # HISTORY API
@@ -278,10 +261,8 @@ def api_history_export():
     w.writerow(["Title", "Path", "Type", "Quality", "Date"])
     w.writerows(rows)
     return Response(
-        output.getvalue(),
-        mimetype="text/csv",
-        headers={"Content-Disposition":
-                 "attachment; filename=history.csv"})
+        output.getvalue(), mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=history.csv"})
 
 # =============================================================================
 # SETTINGS API
@@ -319,22 +300,19 @@ def api_ffmpeg_status():
 def api_ffmpeg_install():
     result = {"ok": False, "message": ""}
     ev     = threading.Event()
-
     def done(ok, msg):
         result["ok"]      = ok
         result["message"] = msg
         ev.set()
-
     ffmpeg_manager.download_ffmpeg(done_cb=done)
     ev.wait(timeout=120)
     return jsonify(result)
 
 @app.route("/api/ytdlp/update", methods=["POST"])
 def api_ytdlp_update():
-    ok  = update_ytdlp()
+    ok = update_ytdlp()
     return jsonify({"ok": ok,
-                    "message": "yt-dlp updated." if ok
-                               else "Update failed."})
+                    "message": "yt-dlp updated." if ok else "Update failed."})
 
 @app.route("/api/storage")
 def api_storage():
@@ -350,13 +328,14 @@ def api_storage():
     return jsonify({"bytes": total, "count": count})
 
 # =============================================================================
-# RUN
+# RUN  ←  THIS IS THE FIXED PART
 # =============================================================================
 
 if __name__ == "__main__":
     os.makedirs(cfg.get("download_folder") or "downloads", exist_ok=True)
+    port = int(os.environ.get("PORT", 10000))
     print("\n" + "="*52)
     print("  MediaVault Pro  —  Web Interface")
-    print("  Open in browser:  http://0.0.0.0:10000")
+    print(f"  Open in browser:  http://0.0.0.0:{port}")
     print("="*52 + "\n")
-    app.run(debug=False, port=5000, threaded=True)
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
