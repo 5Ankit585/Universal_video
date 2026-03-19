@@ -4,18 +4,11 @@ services:
     runtime: python
     region: oregon
 
-    # Install FFmpeg system-wide before pip dependencies
-    buildCommand: |
-      apt-get update -qq && apt-get install -y -qq ffmpeg &&
-      pip install -r requirements.txt
-
-    startCommand: python app.py
+    buildCommand: "apt-get install -y ffmpeg && pip install -r requirements.txt"
+    startCommand: "python app.py"
 
     envVars:
       - key: RENDER
         value: "true"
       - key: PORT
         value: "10000"
-
-    # Render free tier spins down after inactivity — paid plan keeps it alive
-    # Files in /tmp are wiped on restart (free tier limitation)
